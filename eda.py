@@ -1,171 +1,208 @@
 import streamlit as st
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
+from filters import apply_filters
+import scipy.stats as stats
+
+def load_css(file_name):
+    with open(file_name) as f:
+        css = f.read()
+    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+
+def custom_card(title, value, content):
+    st.markdown(f"""
+    <div class="custom-card">
+        <h4>{title}</h4>
+        <p class="value">{value}</p>
+        <p class="content">{content}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+def chi_square_test(df, column_name):
+    """
+    Perform a chi-square test for the distribution of a categorical variable.
+
+    Parameters:
+    df (pd.DataFrame): DataFrame containing the data.
+    column_name (str): The column name for the categorical variable.
+
+    Returns:
+    chi2_stat (float): The chi-square statistic.
+    p_value (float): The p-value of the test.
+    """
+    contingency_table = pd.crosstab(index=df[column_name], columns='count')
+    chi2_stat, p_value, _, _ = stats.chi2_contingency(contingency_table)
+    return chi2_stat, p_value
+
+    
+def calculate_avg_loyalty_by_region(df):
+    """
+    Calculate the average loyalty score by region.
+
+    Parameters:
+    df (pd.DataFrame): DataFrame containing customer data with 'region' and 'loyalty_score' columns.
+
+    Returns:
+    pd.DataFrame: DataFrame with 'region' and 'avg_loyalty_score' columns.
+    """
+    avg_loyalty_by_region = df.groupby('region')['loyalty_score'].mean().reset_index()
+    avg_loyalty_by_region.columns = ['region', 'avg_loyalty_score']
+    return avg_loyalty_by_region
+
+def calculate_avg_purchase_frequency_by_region(df):
+    """
+    Calculate the average purchase frequency by region.
+
+    Parameters:
+    df (pd.DataFrame): DataFrame containing customer data with 'region' and 'purchase_frequency' columns.
+
+    Returns:
+    pd.DataFrame: DataFrame with 'region' and 'avg_purchase_frequency' columns.
+    """
+    avg_purchase_frequency_by_region = df.groupby('region')['purchase_frequency'].mean().reset_index()
+    avg_purchase_frequency_by_region.columns = ['region', 'avg_purchase_frequency']
+    return avg_purchase_frequency_by_region
 
 def perform_eda(df):
-    # Sidebar for Filters
-    st.sidebar.header("Filters")
+    # Load custom CSS
+    load_css('styles.css')
+
+    # Apply filters
+    filtered_df, age_group, income_bracket = apply_filters(df)
     
-    selected_income_bracket = st.sidebar.multiselect(
-        "Select Income Bracket(s)",
-        options=df['income_bracket'].unique(),
-        default=df['income_bracket'].unique()
-    )
-    
-    selected_age_group = st.sidebar.multiselect(
-        "Select Age Group(s)",
-        options=df['age_group'].unique(),
-        default=df['age_group'].unique()
-    )
-    
-    selected_region = st.sidebar.multiselect(
-        "Select Region(s)",
-        options=df['region'].unique(),
-        default=df['region'].unique()
-    )
-    
-    selected_loyalty_score = st.sidebar.slider(
-        "Select Loyalty Score Range",
-        min_value=float(df['loyalty_score'].min()),
-        max_value=float(df['loyalty_score'].max()),
-        value=(float(df['loyalty_score'].min()), float(df['loyalty_score'].max()))
-    )
-    
-    # Filter the dataframe based on selected options
-    filtered_df = df[
-        (df['income_bracket'].isin(selected_income_bracket)) &
-        (df['age_group'].isin(selected_age_group)) &
-        (df['region'].isin(selected_region)) &
-        (df['loyalty_score'].between(*selected_loyalty_score))
-    ]
-    
-    # Key Metrics Section
-    st.markdown("### Key Metrics")
-    col1, col2, col3 = st.columns(3)
-    
+    if filtered_df.empty:
+        st.write("No data available for the selected filters.")
+        return
+
+
+    # Overview Section
+    st.header('Overview')
+
+    # Create columns
+    col1, col2, col3, col4 = st.columns(4, gap="medium")
+
+    # Populate columns with metrics
     with col1:
-        total_customers = filtered_df['user_id'].nunique()
-        avg_age = filtered_df['age'].mean()
-        st.metric("Total Customers", total_customers)
-        st.metric("Average Age", f"{avg_age:.1f}")
-    
+        custom_card('Total Number of Customers', str(filtered_df['user_id'].nunique()), 'Total Customers')
     with col2:
-        avg_purchase_amount = filtered_df['purchase_amount'].mean()
-        avg_annual_income = filtered_df['annual_income'].mean()
-        st.metric("Average Purchase Amount", f"${avg_purchase_amount:.2f}")
-        st.metric("Average Annual Income", f"${avg_annual_income:.2f}")
-    
+        custom_card('Average Purchase Amount', f"${filtered_df['purchase_amount'].mean():.2f}", 'Average Purchase Amount')
     with col3:
-        avg_loyalty_score = filtered_df['loyalty_score'].mean()
-        avg_purchase_frequency = filtered_df['purchase_frequency'].mean()
-        st.metric("Average Loyalty Score", f"{avg_loyalty_score:.2f}")
-        st.metric("Average Purchase Frequency", f"{avg_purchase_frequency:.1f}")
+        custom_card('Average Purchase Frequency', f"{filtered_df['purchase_frequency'].mean():.2f}", 'Average Purchase Frequency')
+    with col4:
+        custom_card('Mean Loyalty Score', f"{filtered_df['loyalty_score'].mean():.2f}", 'Mean Loyalty Score')
+
+    # Create columns with small gap
+    col1, col2, col3 = st.columns((1.5, 4.5, 2), gap="small")
     
-    st.markdown("---")
-    
-    # Summary Statistics in a Dropdown
-    with st.expander("Summary Statistics"):
-        st.markdown("### Summary Statistics")
-        st.write(filtered_df.describe())
-    
-    st.markdown("---")
-    
-    # Distribution Plots
-    st.markdown("### Distributions")
-    col1, col2 = st.columns(2)
-    
+    # Placeholder content for column 1 and 2
     with col1:
-        st.markdown("#### Age Distribution")
-        fig = px.histogram(filtered_df, x='age', nbins=20, title='Age Distribution')
-        st.plotly_chart(fig, use_container_width=True)
-    
+        st.subheader("Distribution by Age Group")
+        age_group_distribution = filtered_df['age_group'].value_counts().reset_index()
+        age_group_distribution.columns = ['age_group', 'count']
+        fig_age_group_pie = px.pie(age_group_distribution, names='age_group', values='count', title="Age Group Distribution")
+        st.plotly_chart(fig_age_group_pie)
+
+        st.subheader("Distribution by Income Bracket")
+        income_bracket_distribution = filtered_df['income_bracket'].value_counts().reset_index()
+        income_bracket_distribution.columns = ['income_bracket', 'count']
+        fig_income_bracket_pie = px.pie(income_bracket_distribution, names='income_bracket', values='count', title="Income Bracket Distribution")
+        st.plotly_chart(fig_income_bracket_pie)
     with col2:
-        st.markdown("#### Annual Income Distribution")
-        fig = px.histogram(filtered_df, x='annual_income', nbins=20, title='Annual Income Distribution')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    st.markdown("---")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("#### Purchase Amount Distribution")
-        fig = px.histogram(filtered_df, x='purchase_amount', nbins=20, title='Purchase Amount Distribution')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.markdown("#### Purchase Frequency Distribution")
-        fig = px.histogram(filtered_df, x='purchase_frequency', nbins=20, title='Purchase Frequency Distribution')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    st.markdown("---")
-    
-    # Box Plots
-    st.markdown("### Box Plots by Age Group and Income Bracket")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("#### Purchase Amount by Age Group")
-        fig = px.box(filtered_df, x='age_group', y='purchase_amount', title='Purchase Amount by Age Group')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.markdown("#### Purchase Frequency by Age Group")
-        fig = px.box(filtered_df, x='age_group', y='purchase_frequency', title='Purchase Frequency by Age Group')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    st.markdown("---")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("#### Purchase Amount by Income Bracket")
-        fig = px.box(filtered_df, x='income_bracket', y='purchase_amount', title='Purchase Amount by Income Bracket')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.markdown("#### Purchase Frequency by Income Bracket")
-        fig = px.box(filtered_df, x='income_bracket', y='purchase_frequency', title='Purchase Frequency by Income Bracket')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    st.markdown("---")
-    
-    # Scatter Plots
-    st.markdown("### Scatter Plots")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("#### Purchase Amount vs Age")
-        fig = px.scatter(filtered_df, x='age', y='purchase_amount', trendline='ols', title='Purchase Amount vs Age')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.markdown("#### Purchase Frequency vs Age")
-        fig = px.scatter(filtered_df, x='age', y='purchase_frequency', trendline='ols', title='Purchase Frequency vs Age')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    st.markdown("---")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("#### Purchase Amount vs Annual Income")
-        fig = px.scatter(filtered_df, x='annual_income', y='purchase_amount', trendline='ols', title='Purchase Amount vs Annual Income')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.markdown("#### Purchase Frequency vs Annual Income")
-        fig = px.scatter(filtered_df, x='annual_income', y='purchase_frequency', trendline='ols', title='Purchase Frequency vs Annual Income')
-        st.plotly_chart(fig, use_container_width=True)
-    
-    st.markdown("---")
-    
-    # Correlation Heatmap
-    st.markdown("### Correlation Heatmap")
-    corr_matrix = filtered_df[['age', 'annual_income', 'purchase_amount', 'purchase_frequency', 'loyalty_score']].corr()
-    fig = px.imshow(corr_matrix, 
-                text_auto=True, 
-                aspect="auto", 
-                color_continuous_scale='RdBu_r', 
-                title='Correlation Matrix Heatmap')
-    st.plotly_chart(fig, use_container_width=True)
+        st.subheader("Correlation Heatmap")
+        
+        # Filter numeric columns for correlation heatmap
+        numeric_df = filtered_df.select_dtypes(include=['number']).drop(columns=['user_id'])
+        corr_matrix = numeric_df.corr()
+        
+        fig_corr_heatmap = px.imshow(corr_matrix, text_auto=True, title="Correlation Heatmap")
+        st.plotly_chart(fig_corr_heatmap)
+        
+        st.subheader("Distribution of Purchase Amounts")
+        fig_purchase_amount = px.histogram(filtered_df, x='purchase_amount', nbins=30, title="Distribution of Purchase Amounts")
+        st.plotly_chart(fig_purchase_amount)
+
+        st.subheader("Purchase Frequency by Age Group")
+        fig_purchase_frequency_age = px.bar(filtered_df.groupby('age_group')['purchase_frequency'].mean().reset_index(),
+                                            x='age_group', y='purchase_frequency', title="Purchase Frequency by Age Group")
+        st.plotly_chart(fig_purchase_frequency_age)
+
+        st.subheader("Loyalty Score by Income Bracket")
+        fig_loyalty_income = px.box(filtered_df, x='income_bracket', y='loyalty_score', title="Loyalty Score by Income Bracket")
+        st.plotly_chart(fig_loyalty_income)       
+        
+
+    # Column 3: Dataset and About Section
+    with col3:
+        st.subheader("Loyalty score by region")
+        
+        # Calculate average loyalty score by region and display as a styled table
+        avg_loyalty_by_region = calculate_avg_loyalty_by_region(filtered_df)
+        
+        # Generate HTML table with custom styling
+        st.markdown("""
+        <table>
+            <tr>
+                <th>Region</th>
+                <th>Average Loyalty Score</th>
+            </tr>
+            """ + "".join(
+                f"<tr><td>{row['region']}</td><td><div class='progress-bar-container'><div class='progress-bar' style='width: {row['avg_loyalty_score']/avg_loyalty_by_region['avg_loyalty_score'].max()*100}%;'>{row['avg_loyalty_score']:.2f}</div></div></td></tr>"
+                for _, row in avg_loyalty_by_region.iterrows()
+            ) + """
+        </table>
+        """, unsafe_allow_html=True)
+        
+        st.subheader ("Purchase Frequency by region")
+        
+        # Calculate average purchase frequency by region and display as a styled table
+        avg_purchase_frequency_by_region = calculate_avg_purchase_frequency_by_region(filtered_df)
+        
+        # Generate HTML table with custom styling
+        st.markdown("""
+        <table>
+            <tr>
+                <th>Region</th>
+                <th>Average Loyalty Score</th>
+            </tr>
+            """ + "".join(
+                f"<tr><td>{row['region']}</td><td><div class='progress-bar-container'><div class='progress-bar' style='width: {row['avg_purchase_frequency']/avg_purchase_frequency_by_region['avg_purchase_frequency'].max()*100}%;'>{row['avg_purchase_frequency']:.2f}</div></div></td></tr>"
+                for _, row in avg_purchase_frequency_by_region.iterrows()
+            ) + """
+        </table>
+        """, unsafe_allow_html=True)
+        
+        # Chi-Square Test for Region
+        st.subheader("Chi-Square Test for Regions")
+        chi2_stat, p_value = chi_square_test(filtered_df, 'region')
+        st.write(f"Chi-Square Statistic: {chi2_stat:.2f}")
+        st.write(f"P-Value: {p_value:.4f}")
+
+        # Interpretation of the chi-square test result
+        if p_value < 0.05:
+            st.write("The p-value is less than 0.05, indicating that the distribution of regions is significantly different from what would be expected by chance.")
+        else:
+            st.write("The p-value is greater than 0.05, indicating that the distribution of regions is not significantly different from what would be expected by chance.")
+       
+        
+        
+        
+        st.subheader("Download Dataset")
+        st.markdown("""
+        You can download the dataset used for this analysis from the following link:
+        [Customer Purchasing Behaviors Dataset](https://www.kaggle.com/datasets/hanaksoy/customer-purchasing-behaviors/data)
+        """)
+        
+        st.subheader("About the Project")
+        st.markdown("""
+        This project analyzes customer purchasing behavior and segmentation using various metrics such as purchase amount, 
+        purchase frequency, and loyalty score. The goal is to understand how these metrics vary by different customer attributes 
+        like age group, income bracket, and region.
+
+        Key objectives include:
+        - Understanding customer behavior patterns.
+        - Identifying significant differences in purchasing metrics across various segments.
+        - Providing actionable insights for targeted marketing strategies.
+
+        The dataset used for this analysis includes customer attributes and purchasing data, which helps in segmenting and 
+        analyzing customer behavior effectively.
+        """)

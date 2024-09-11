@@ -1,7 +1,7 @@
 import pandas as pd
 
 def load_data():
-    # Load your dataset
+    # Load the dataset
     df = pd.read_csv('data/Customer Purchasing Behaviors.csv')
     
     # Create age groups with specified labels, excluding 'senior'

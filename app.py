@@ -1,7 +1,7 @@
 import streamlit as st
 from data_processing import load_data
 from eda import perform_eda
-from hypothesis_testing import perform_hypothesis_testing
+from hypothesis_testing import perform_two_way_anova
 
 # Load the dataset
 df = load_data()
@@ -21,4 +21,4 @@ if option == "Dashboard":
 elif option == "Hypothesis Testing":
     st.header("Hypothesis Testing Results")
     st.write("View the results of hypothesis testing for various metrics.")
-    perform_hypothesis_testing(df)
+    perform_two_way_anova(df)
