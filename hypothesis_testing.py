@@ -141,7 +141,6 @@ def perform_two_way_anova(df):
             <li>The P-value was used as the key indicator of significance. A P-value less than 0.05 indicated a statistically significant difference, leading us to reject the null hypothesis and accept the alternative hypothesis.</li>
         </ul>
         <p>Each test revealed significant differences across the groups, confirming that age groups, income brackets, and regions influence customer behavior metrics. These results provide valuable insights for further modeling or strategy development.</p>
-        
         <h3>Step 5: Linear Regression Analysis</h3>
         <p>In addition to ANOVA, linear regression was used to examine the relationship between purchase amount and independent variables such as age and annual income. The regression results provide insights into how well these variables predict purchase amount and their significance in the model.</p>
         <p>The detailed regression summary is displayed above.</p>
