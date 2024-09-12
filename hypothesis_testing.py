@@ -95,11 +95,31 @@ def perform_two_way_anova(df):
     html_table = create_html_table(results_df)
     st.markdown(html_table, unsafe_allow_html=True)
     
-     # Report Section
+    # Report Section with Modelling and Accuracy Tests Updates
     st.markdown("""
     <div class="report-section">
         <h2>Report</h2>
         <p>The results of the ANOVA tests are summarized in the table below. The F-value indicates the ratio of variance between groups to the variance within groups, while the P-value assesses the probability that the observed differences are due to chance.</p>      
+        <h3>Step 3: Modelling (Hypothesis Testing)</h3>
+        <p>In this step, we used ANOVA (Analysis of Variance) to analyze differences in customer behavior across different segments. The key variables we modeled and tested include:</p>
+        <ul>
+            <li><strong>Mean Purchase Amount</strong> across different <strong>age groups</strong> and <strong>income brackets</strong>.</li>
+            <li><strong>Mean Purchase Frequency</strong> across different <strong>regions</strong>.</li>
+            <li><strong>Mean Loyalty Score</strong> across <strong>age groups</strong> and <strong>regions</strong>.</li>
+        </ul>
+        <p><strong>Hypothesis Tests:</strong></p>
+        <ul>
+            <li>Null Hypothesis (H0): There is no significant difference in the metric (e.g., purchase amount) across the groups.</li>
+            <li>Alternative Hypothesis (HA): There is a significant difference in the metric across the groups.</li>
+        </ul>
+        <p>We calculated the F-value and P-value for each hypothesis to assess whether the differences observed were statistically significant. The results are presented in the table format above.</p>
+        <h3>Step 4: Accuracy Tests (Validation)</h3>
+        <p>To ensure the reliability and significance of the findings from the hypothesis tests, the following steps were taken:</p>
+        <ul>
+            <li>ANOVA Tests were applied to evaluate the statistical differences in customer behavior metrics (e.g., purchase amount, frequency, loyalty score) across segments.</li>
+            <li>The P-value was used as the key indicator of significance. A P-value less than 0.05 indicated a statistically significant difference, leading us to reject the null hypothesis and accept the alternative hypothesis.</li>
+        </ul>
+        <p>Each test revealed significant differences across the groups, confirming that age groups, income brackets, and regions influence customer behavior metrics. These results provide valuable insights for further modeling or strategy development.</p>
         <h3>Summary of Results:</h3>
         <ul>
             <li><strong>Mean Purchase Amount by Age Group:</strong> The F-value of 308.02 and P-value of 0.0000 indicate a highly significant difference in purchase amounts between different age groups.</li>
@@ -108,6 +128,5 @@ def perform_two_way_anova(df):
             <li><strong>Mean Loyalty Score by Age Group:</strong> With an F-value of 257.80 and P-value of 0.0000, there is a significant variation in loyalty scores between age groups.</li>
             <li><strong>Mean Loyalty Score by Region:</strong> The F-value of 20.15 and P-value of 0.0000 indicate a significant difference in loyalty scores between regions.</li>
         </ul>
-        <p>All tests show statistically significant differences, suggesting that customer behavior metrics such as purchase amount, frequency, and loyalty score vary significantly by age group, income bracket, and region. These insights can help in tailoring marketing strategies and improving customer targeting.</p>
     </div>
     """, unsafe_allow_html=True)
