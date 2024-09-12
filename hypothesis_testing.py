@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import scipy.stats as stats
+import statsmodels.api as sm
 
 def load_css(file_name):
     with open(file_name) as f:
@@ -95,11 +96,32 @@ def perform_two_way_anova(df):
     html_table = create_html_table(results_df)
     st.markdown(html_table, unsafe_allow_html=True)
     
+    # Perform Linear Regression Analysis
+    def perform_linear_regression(df, dependent_var, independent_vars):
+        X = df[independent_vars]
+        y = df[dependent_var]
+        X = sm.add_constant(X)  # Adds a constant term to the predictor
+        model = sm.OLS(y, X).fit()
+        return model.summary()
+
+    # Example linear regression analysis
+    st.subheader("Linear Regression Analysis")
+    st.markdown("""
+    <div class="regression-section">
+        <p>The following linear regression analysis examines the relationship between purchase amount and multiple independent variables, such as age, income, and region.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Perform regression (e.g., purchase_amount as dependent variable)
+    regression_summary = perform_linear_regression(df, 'purchase_amount', ['age', 'annual_income'])
+    st.write(regression_summary.as_html(), unsafe_allow_html=True)
+
     # Report Section with Modelling and Accuracy Tests Updates
     st.markdown("""
     <div class="report-section">
         <h2>Report</h2>
         <p>The results of the ANOVA tests are summarized in the table below. The F-value indicates the ratio of variance between groups to the variance within groups, while the P-value assesses the probability that the observed differences are due to chance.</p>      
+        
         <h3>Step 3: Modelling (Hypothesis Testing)</h3>
         <p>In this step, we used ANOVA (Analysis of Variance) to analyze differences in customer behavior across different segments. The key variables we modeled and tested include:</p>
         <ul>
@@ -113,6 +135,7 @@ def perform_two_way_anova(df):
             <li>Alternative Hypothesis (HA): There is a significant difference in the metric across the groups.</li>
         </ul>
         <p>We calculated the F-value and P-value for each hypothesis to assess whether the differences observed were statistically significant. The results are presented in the table format above.</p>
+
         <h3>Step 4: Accuracy Tests (Validation)</h3>
         <p>To ensure the reliability and significance of the findings from the hypothesis tests, the following steps were taken:</p>
         <ul>
@@ -120,13 +143,9 @@ def perform_two_way_anova(df):
             <li>The P-value was used as the key indicator of significance. A P-value less than 0.05 indicated a statistically significant difference, leading us to reject the null hypothesis and accept the alternative hypothesis.</li>
         </ul>
         <p>Each test revealed significant differences across the groups, confirming that age groups, income brackets, and regions influence customer behavior metrics. These results provide valuable insights for further modeling or strategy development.</p>
-        <h3>Summary of Results:</h3>
-        <ul>
-            <li><strong>Mean Purchase Amount by Age Group:</strong> The F-value of 308.02 and P-value of 0.0000 indicate a highly significant difference in purchase amounts between different age groups.</li>
-            <li><strong>Mean Purchase Amount by Income Bracket:</strong> An F-value of 602.66 and P-value of 0.0000 show a very significant difference in purchase amounts across different income brackets.</li>
-            <li><strong>Mean Purchase Frequency by Region:</strong> The F-value of 20.00 and P-value of 0.0000 suggest a significant difference in purchase frequency across regions.</li>
-            <li><strong>Mean Loyalty Score by Age Group:</strong> With an F-value of 257.80 and P-value of 0.0000, there is a significant variation in loyalty scores between age groups.</li>
-            <li><strong>Mean Loyalty Score by Region:</strong> The F-value of 20.15 and P-value of 0.0000 indicate a significant difference in loyalty scores between regions.</li>
-        </ul>
+        
+        <h3>Step 5: Linear Regression Analysis</h3>
+        <p>In addition to ANOVA, linear regression was used to examine the relationship between purchase amount and independent variables such as age and annual income. The regression results provide insights into how well these variables predict purchase amount and their significance in the model.</p>
+        <p>The detailed regression summary is displayed above.</p>
     </div>
     """, unsafe_allow_html=True)
