@@ -121,7 +121,6 @@ def perform_two_way_anova(df):
     <div class="report-section">
         <h2>Report</h2>
         <p>The results of the ANOVA tests are summarized in the table below. The F-value indicates the ratio of variance between groups to the variance within groups, while the P-value assesses the probability that the observed differences are due to chance.</p>      
-        
         <h3>Step 3: Modelling (Hypothesis Testing)</h3>
         <p>In this step, we used ANOVA (Analysis of Variance) to analyze differences in customer behavior across different segments. The key variables we modeled and tested include:</p>
         <ul>
@@ -135,7 +134,6 @@ def perform_two_way_anova(df):
             <li>Alternative Hypothesis (HA): There is a significant difference in the metric across the groups.</li>
         </ul>
         <p>We calculated the F-value and P-value for each hypothesis to assess whether the differences observed were statistically significant. The results are presented in the table format above.</p>
-
         <h3>Step 4: Accuracy Tests (Validation)</h3>
         <p>To ensure the reliability and significance of the findings from the hypothesis tests, the following steps were taken:</p>
         <ul>
